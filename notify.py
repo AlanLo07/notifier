@@ -1,10 +1,11 @@
 import time 
 import requests
-from NotifyWin10 import ToastNotifier
-import webbrowser
+from NotifyWin10 import ToastNotifier  #Fragmento de la libraria https://github.com/jithurjacob/Windows-10-Toast-Notifications, modificado para agregar un enlace al sitio https://smartrader.io 
+import webbrowser 
 
 if __name__ == '__main__':
     markets = []
+    #Test para inicializar mercados
     """ markets = [
         {
             'symbol': '^IXIC', 
@@ -28,8 +29,8 @@ if __name__ == '__main__':
             'name': 'DAX PERFORMANCE-INDEX'
         }
     ] """
-    marketSummary = None
-    toast = ToastNotifier()
+    marketSummary = None 
+    toast = ToastNotifier() 
 
     while True:
         try:
@@ -38,15 +39,16 @@ if __name__ == '__main__':
                 headers={"X-API-KEY":"iawz6uSnhral60DNR3rsE7KqkyVf0xqG31cuJcT3"}
                 )
         except:
-            #if the data is not fetched due to lack of internet
-            print("Please! Check your internet connection")
+            print("Error en la conexion a Internet")
+        
         if not markets:
+            #inicializando los mercados
 
             if (marketSummary != None):
-                #converting data into JSON format
+                #convirtiendo la data a formato JSON
                 data = marketSummary.json()["quoteResponse"]["result"]
                 
-                #getting the data from the JSON
+                #obteniendo los datos necesarios
                 for market in data:
                     market = {
                         "symbol": market["symbol"],
@@ -57,28 +59,36 @@ if __name__ == '__main__':
                     }
 
                     markets.append(market)
+                
                 del data
         else:
-            if True:
-                #converting data into JSON format
+            if (marketSummary != None):
+                #convirtiendo la data a formato JSON
                 data = marketSummary.json()["quoteResponse"]["result"]
-                message = ""
+                message = "" #mensaje de notificacion
+                
                 for i,market in enumerate(markets):
+                    #comparando los tiempos de actualizacion del mercado
                     if market["time"] != data[i]["regularMarketTime"]:
+                        #actualizando los datos del mercado
                         market["price"] = data[i]["regularMarketPrice"]
                         market["change"] = data[i]["regularMarketChangePercent"]
                         market["time"] = data[i]["regularMarketTime"]
+                        
                         if market["change"] > 0.5:
                             message += "The price of {} has increased by {} percent.\n".format(market["name"], market["change"])
                         elif market["change"] < -0.5:
                             message += "The price of {} has decreased by {} percent.\n".format(market["name"], market["change"])
+                
                 if message:
+                    #mostrando la notificacion
                     toast.show_toast(
                        title="Market Update", 
                        msg=message,
                        icon_path="info.ico",
-                       callback_on_click=lambda: webbrowser.open("https://smartrader.io/"),
+                       callback_on_click=lambda: webbrowser.open("https://smartrader.io/"), #redireccionando al sitio web
                     )
-                    del data
+                
+                del data
 
-            time.sleep(24*60*60 / 100)
+            time.sleep(24*60*60 / 100) # la API se puede consultar cada 100 veces por dia.
